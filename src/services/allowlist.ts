@@ -1,20 +1,5 @@
-import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
 import { env } from "../env";
-
-const DB_PATH = ".local/allowlist.db";
-
-mkdirSync(dirname(DB_PATH), { recursive: true });
-
-const db = new Database(DB_PATH, { create: true });
-db.run(`
-  CREATE TABLE IF NOT EXISTS allowlist (
-    user_id TEXT PRIMARY KEY,
-    added_by TEXT NOT NULL,
-    added_at INTEGER NOT NULL
-  )
-`);
+import { db } from "./db";
 
 const selectStmt = db.prepare<{ user_id: string }, [string]>(
   `SELECT user_id FROM allowlist WHERE user_id = ?`,

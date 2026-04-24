@@ -1,32 +1,4 @@
-import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-
-const DB_PATH = ".local/stats.db";
-
-mkdirSync(dirname(DB_PATH), { recursive: true });
-
-const db = new Database(DB_PATH, { create: true });
-
-const SCHEMA_STATEMENTS = [
-  `CREATE TABLE IF NOT EXISTS queries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ts INTEGER NOT NULL,
-    user_id TEXT NOT NULL,
-    source TEXT NOT NULL,
-    model TEXT NOT NULL,
-    input_tokens INTEGER NOT NULL,
-    output_tokens INTEGER NOT NULL,
-    cache_read INTEGER NOT NULL,
-    cache_create INTEGER NOT NULL,
-    cost_usd REAL NOT NULL,
-    duration_ms INTEGER NOT NULL
-  )`,
-  `CREATE INDEX IF NOT EXISTS idx_queries_ts ON queries(ts)`,
-  `CREATE INDEX IF NOT EXISTS idx_queries_user ON queries(user_id)`,
-];
-
-for (const sql of SCHEMA_STATEMENTS) db.run(sql);
+import { db } from "./db";
 
 export type QuerySource = "slash" | "mention";
 

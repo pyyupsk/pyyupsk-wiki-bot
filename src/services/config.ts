@@ -1,21 +1,5 @@
-import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
 import { env } from "../env";
-
-const DB_PATH = ".local/config.db";
-
-mkdirSync(dirname(DB_PATH), { recursive: true });
-
-const db = new Database(DB_PATH, { create: true });
-db.run(`
-  CREATE TABLE IF NOT EXISTS config (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_by TEXT NOT NULL,
-    updated_at INTEGER NOT NULL
-  )
-`);
+import { db } from "./db";
 
 const MODEL_CHOICES = ["haiku", "sonnet", "opus"] as const;
 export type ModelChoice = (typeof MODEL_CHOICES)[number];
