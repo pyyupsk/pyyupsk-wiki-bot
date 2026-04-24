@@ -17,6 +17,7 @@ export const messageCreate = {
     if (!prompt) return;
 
     if ("sendTyping" in message.channel) await message.channel.sendTyping().catch(() => {});
+    await message.react(":eyes:").catch(() => {});
 
     const turns = await walkReplyChain(message, me.id);
     const fullPrompt = formatTranscript(turns, prompt);

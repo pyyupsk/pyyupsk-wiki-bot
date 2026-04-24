@@ -1,4 +1,4 @@
-import { Events, type Interaction } from "discord.js";
+import { Events, type Interaction, MessageFlags } from "discord.js";
 import type { BotClient } from "../client";
 import { logger } from "../lib/logger";
 
@@ -15,7 +15,7 @@ export const interactionCreate = {
       await command.execute(interaction);
     } catch (err) {
       logger.error("command failed", { name: interaction.commandName, err: String(err) });
-      const reply = { content: "command failed", ephemeral: true };
+      const reply = { content: "command failed", flags: MessageFlags.Ephemeral } as const;
       if (interaction.deferred || interaction.replied) {
         await interaction.followUp(reply);
       } else {

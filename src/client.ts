@@ -15,6 +15,7 @@ export function createClient(): BotClient {
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMessageReactions,
     ],
   }) as BotClient;
   client.commands = new Collection();
