@@ -1,16 +1,10 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { createClient } from "./client";
+import { registerCommands } from "./commands";
 import { env } from "./env";
+import { registerEvents } from "./events";
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
-});
-
-client.once("clientReady", (c) => {
-  console.log(`logged in as ${c.user.tag}`);
-});
+const client = createClient();
+registerCommands(client);
+registerEvents(client);
 
 await client.login(env.DISCORD_TOKEN);
