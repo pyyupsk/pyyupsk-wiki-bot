@@ -2,6 +2,7 @@ import { type ChatInputCommandInteraction, SlashCommandBuilder } from "discord.j
 import type { SlashCommand } from "../client";
 import { logger } from "../lib/logger";
 import { renderReply } from "../services/render";
+import { recordQuery } from "../services/stats";
 import { askWiki } from "../services/wiki";
 
 export const ask: SlashCommand = {
@@ -15,13 +16,16 @@ export const ask: SlashCommand = {
     const prompt = interaction.options.getString("prompt", true);
     await interaction.deferReply();
 
-    const [err, reply] = await askWiki(prompt);
+    const [err, result] = await askWiki(prompt);
     if (err) {
       logger.error("askWiki failed", { err: err.message });
       await interaction.editReply({ content: `error: ${err.message}` });
       return;
     }
 
-    await interaction.editReply(renderReply(reply));
+    if (result.usage) {
+      recordQuery({ ...result.usage, user_id: interaction.user.id, source: "slash" });
+    }
+    await interaction.editReply(renderReply(result.reply));
   },
 };

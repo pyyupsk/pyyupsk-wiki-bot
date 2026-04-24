@@ -29,6 +29,21 @@ const textReplySchema = z.object({
 export const wikiReplySchema = z.discriminatedUnion("type", [textReplySchema, embedReplySchema]);
 export type WikiReply = z.infer<typeof wikiReplySchema>;
 
+export type QueryUsage = {
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read: number;
+  cache_create: number;
+  cost_usd: number;
+  duration_ms: number;
+};
+
+export type AskResult = {
+  reply: WikiReply;
+  usage: QueryUsage | null;
+};
+
 const OUTPUT_SCHEMA = {
   type: "object",
   required: ["type"],
@@ -117,7 +132,7 @@ function extractJson(raw: string): string {
   return trimmed;
 }
 
-export async function askWiki(prompt: string): Promise<[Error, null] | [null, WikiReply]> {
+export async function askWiki(prompt: string): Promise<[Error, null] | [null, AskResult]> {
   logger.info("wiki query", { prompt, model: env.CLAUDE_MODEL });
 
   const proc = Bun.spawn(
@@ -158,14 +173,26 @@ export async function askWiki(prompt: string): Promise<[Error, null] | [null, Wi
 
   const { is_error, result, structured_output, total_cost_usd, duration_ms, usage } = env_.data;
 
-  if (usage) {
+  const queryUsage: QueryUsage | null = usage
+    ? {
+        model: env.CLAUDE_MODEL,
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+        cache_read: usage.cache_read_input_tokens ?? 0,
+        cache_create: usage.cache_creation_input_tokens ?? 0,
+        cost_usd: total_cost_usd ?? 0,
+        duration_ms: duration_ms ?? 0,
+      }
+    : null;
+
+  if (queryUsage) {
     logger.info("claude usage", {
-      input: usage.input_tokens,
-      output: usage.output_tokens,
-      cache_read: usage.cache_read_input_tokens ?? 0,
-      cache_create: usage.cache_creation_input_tokens ?? 0,
-      cost_usd: total_cost_usd?.toFixed(6),
-      duration_ms,
+      input: queryUsage.input_tokens,
+      output: queryUsage.output_tokens,
+      cache_read: queryUsage.cache_read,
+      cache_create: queryUsage.cache_create,
+      cost_usd: queryUsage.cost_usd.toFixed(6),
+      duration_ms: queryUsage.duration_ms,
     });
   }
 
@@ -179,8 +206,8 @@ export async function askWiki(prompt: string): Promise<[Error, null] | [null, Wi
       err: z.prettifyError(parsed.error),
       preview: fallback.slice(0, 200),
     });
-    return [null, { type: "text", content: fallback.slice(0, 2000) }];
+    return [null, { reply: { type: "text", content: fallback.slice(0, 2000) }, usage: queryUsage }];
   }
 
-  return [null, parsed.data];
+  return [null, { reply: parsed.data, usage: queryUsage }];
 }
