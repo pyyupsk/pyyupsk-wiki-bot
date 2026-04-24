@@ -132,12 +132,22 @@ function extractJson(raw: string): string {
   return trimmed;
 }
 
+let hotcacheCache: { mtime: number; text: string } | null = null;
+
 async function readHotcache(): Promise<string> {
-  const [err, text] = await safe(Bun.file(`${env.WIKI_DIR}/hotcache.md`).text());
-  if (err) {
-    logger.warn("hotcache.md not found", { path: `${env.WIKI_DIR}/hotcache.md` });
+  const path = `${env.WIKI_DIR}/hotcache.md`;
+  const file = Bun.file(path);
+  const [statErr, stat] = await safe(file.stat());
+  if (statErr) {
+    logger.warn("hotcache.md not found", { path });
     return "";
   }
+  const mtime = stat.mtimeMs;
+  if (hotcacheCache && hotcacheCache.mtime === mtime) return hotcacheCache.text;
+
+  const [readErr, text] = await safe(file.text());
+  if (readErr) return "";
+  hotcacheCache = { mtime, text };
   return text;
 }
 

@@ -38,11 +38,6 @@ function parseValue<K extends ConfigKey>(key: K, raw: string): ConfigSchema[K] {
   return raw as ConfigSchema[K];
 }
 
-function serializeValue<K extends ConfigKey>(key: K, value: ConfigSchema[K]): string {
-  if (key === "claude_model") return String(value);
-  return String(value);
-}
-
 export function getConfig<K extends ConfigKey>(key: K): ConfigSchema[K] {
   const row = selectStmt.get(key);
   if (!row) return DEFAULTS[key];
@@ -53,8 +48,7 @@ export function getAllConfig(): Record<ConfigKey, { value: string; overridden: b
   const out = {} as Record<ConfigKey, { value: string; overridden: boolean }>;
   for (const key of CONFIG_KEYS) {
     const row = selectStmt.get(key);
-    const value = row ? row.value : serializeValue(key, DEFAULTS[key]);
-    out[key] = { value, overridden: row !== null };
+    out[key] = { value: row ? row.value : String(DEFAULTS[key]), overridden: row !== null };
   }
   return out;
 }

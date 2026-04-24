@@ -9,9 +9,7 @@ export const ask: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName("ask")
     .setDescription("Ask the wiki")
-    .addStringOption((o) =>
-      o.setName("prompt").setDescription("Your question").setRequired(true),
-    ) as SlashCommandBuilder,
+    .addStringOption((o) => o.setName("prompt").setDescription("Your question").setRequired(true)),
   execute: async (interaction: ChatInputCommandInteraction) => {
     const prompt = interaction.options.getString("prompt", true);
     await interaction.deferReply();

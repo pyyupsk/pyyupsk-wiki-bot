@@ -6,13 +6,15 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import type { SlashCommand } from "../client";
-import { env } from "../env";
 import { logger } from "../lib/logger";
+import { ephemeral } from "../lib/reply";
 import { safe } from "../lib/safe";
+import { isOwner } from "../services/allowlist";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
-type Target = "bot" | "user" | "all";
+const TARGETS = ["bot", "user", "all"] as const;
+type Target = (typeof TARGETS)[number];
 
 export const cleanup: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -35,28 +37,22 @@ export const cleanup: SlashCommand = {
           { name: "your messages only", value: "user" },
           { name: "all (admin/owner)", value: "all" },
         ),
-    ) as SlashCommandBuilder,
+    ),
   execute: async (interaction: ChatInputCommandInteraction) => {
     const count = interaction.options.getInteger("count", true);
     const target = (interaction.options.getString("target") ?? "bot") as Target;
     const channel = interaction.channel;
 
     if (!channel || channel.type === ChannelType.DM || !("bulkDelete" in channel)) {
-      await interaction.reply({
-        content: "cleanup only works in guild text channels",
-        flags: MessageFlags.Ephemeral,
-      });
+      await interaction.reply(ephemeral("cleanup only works in guild text channels"));
       return;
     }
 
-    const isOwner = env.DISCORD_OWNER_ID && interaction.user.id === env.DISCORD_OWNER_ID;
-    const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages) ?? false;
+    const canManage =
+      interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages) ?? false;
 
-    if (target === "all" && !isOwner && !isAdmin) {
-      await interaction.reply({
-        content: "need Manage Messages permission or owner for target:all",
-        flags: MessageFlags.Ephemeral,
-      });
+    if (target === "all" && !isOwner(interaction.user.id) && !canManage) {
+      await interaction.reply(ephemeral("need Manage Messages permission or owner for target:all"));
       return;
     }
 

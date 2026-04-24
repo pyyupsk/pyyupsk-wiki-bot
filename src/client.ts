@@ -1,8 +1,16 @@
-import { Client, Collection, GatewayIntentBits, type SlashCommandBuilder } from "discord.js";
+import {
+  type ChatInputCommandInteraction,
+  Client,
+  Collection,
+  GatewayIntentBits,
+  type SlashCommandBuilder,
+  type SlashCommandOptionsOnlyBuilder,
+  type SlashCommandSubcommandsOnlyBuilder,
+} from "discord.js";
 
 export type SlashCommand = {
-  data: SlashCommandBuilder;
-  execute: (interaction: import("discord.js").ChatInputCommandInteraction) => Promise<void>;
+  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | SlashCommandSubcommandsOnlyBuilder;
+  execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 };
 
 export type BotClient = Client & {

@@ -5,9 +5,9 @@ import {
   type PartialUser,
   type User,
 } from "discord.js";
-import { env } from "../env";
 import { logger } from "../lib/logger";
 import { safe } from "../lib/safe";
+import { isOwner } from "../services/allowlist";
 
 const TRASH = "🗑️";
 
@@ -31,15 +31,13 @@ export const messageReactionAdd = {
     const me = msg.client.user?.id;
     if (msg.author.id !== me) return;
 
-    const isOwner = env.DISCORD_OWNER_ID && user.id === env.DISCORD_OWNER_ID;
-
     let isAsker = false;
     if (msg.reference?.messageId) {
       const [err, ref] = await safe(msg.fetchReference());
       isAsker = !err && ref.author.id === user.id;
     }
 
-    if (!isOwner && !isAsker) return;
+    if (!isOwner(user.id) && !isAsker) return;
 
     const [delErr] = await safe(msg.delete());
     if (delErr) logger.warn("delete failed", { err: delErr.message });

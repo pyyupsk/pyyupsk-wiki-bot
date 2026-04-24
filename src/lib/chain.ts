@@ -1,10 +1,11 @@
 import type { Message } from "discord.js";
+import { safe } from "./safe";
 
 const MAX_DEPTH = 6;
 
 export type ChainTurn = { role: "user" | "assistant"; content: string };
 
-function stripMention(content: string, botId: string): string {
+export function stripMention(content: string, botId: string): string {
   return content.replaceAll(`<@${botId}>`, "").trim();
 }
 
@@ -24,12 +25,8 @@ export async function walkReplyChain(message: Message, botId: string): Promise<C
   let depth = 0;
 
   while (cursor?.reference?.messageId && depth < MAX_DEPTH) {
-    let prev: Message;
-    try {
-      prev = await cursor.fetchReference();
-    } catch {
-      break;
-    }
+    const [err, prev]: [Error, null] | [null, Message] = await safe(cursor.fetchReference());
+    if (err) break;
 
     const isBot = prev.author.id === botId;
     const content = isBot

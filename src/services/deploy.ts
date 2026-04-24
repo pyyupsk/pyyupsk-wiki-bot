@@ -36,12 +36,11 @@ export async function syncCommands(force = false): Promise<[Error, null] | [null
     ? Routes.applicationGuildCommands(env.DISCORD_CLIENT_ID, env.DISCORD_GUILD_ID)
     : null;
 
-  logger.info("clearing existing commands");
-  const [clearGlobalErr] = await safe(rest.put(globalRoute, { body: [] }));
-  if (clearGlobalErr) return [clearGlobalErr, null];
+  // When deploying to a guild, clear global to prevent duplicates.
+  // When deploying globally, rest.put replaces the full set — no pre-clear needed.
   if (guildRoute) {
-    const [clearGuildErr] = await safe(rest.put(guildRoute, { body: [] }));
-    if (clearGuildErr) return [clearGuildErr, null];
+    const [clearGlobalErr] = await safe(rest.put(globalRoute, { body: [] }));
+    if (clearGlobalErr) return [clearGlobalErr, null];
   }
 
   const target = guildRoute ?? globalRoute;

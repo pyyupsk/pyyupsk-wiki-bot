@@ -1,6 +1,7 @@
 import { Events, type Message } from "discord.js";
-import { formatTranscript, walkReplyChain } from "../lib/chain";
+import { formatTranscript, stripMention, walkReplyChain } from "../lib/chain";
 import { logger } from "../lib/logger";
+import { safe } from "../lib/safe";
 import { isAllowed } from "../services/allowlist";
 import { getConfig } from "../services/config";
 import { renderReply } from "../services/render";
@@ -15,12 +16,12 @@ export const messageCreate = {
     const me = message.client.user;
     if (!me || !message.mentions.has(me.id)) return;
 
-    const prompt = message.content.replaceAll(`<@${me.id}>`, "").trim();
+    const prompt = stripMention(message.content, me.id);
     if (!prompt) return;
     if (!isAllowed(message.author.id)) return;
 
-    if ("sendTyping" in message.channel) await message.channel.sendTyping().catch(() => {});
-    if (getConfig("lookup_reaction")) await message.react(":eyes:").catch(() => {});
+    if ("sendTyping" in message.channel) await safe(message.channel.sendTyping());
+    if (getConfig("lookup_reaction")) await safe(message.react(":eyes:"));
 
     const turns = getConfig("reply_chain") ? await walkReplyChain(message, me.id) : [];
     const fullPrompt = formatTranscript(turns, prompt);

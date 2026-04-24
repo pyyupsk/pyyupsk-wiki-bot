@@ -1,5 +1,12 @@
-import { type ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  type ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  TimestampStyles,
+  time,
+  userMention,
+} from "discord.js";
 import type { SlashCommand } from "../client";
+import { ephemeral } from "../lib/reply";
 import { addAllowed, isOwner, listAllowed, removeAllowed } from "../services/allowlist";
 
 export const allow: SlashCommand = {
@@ -18,12 +25,10 @@ export const allow: SlashCommand = {
         .setDescription("Remove a user from the allowlist")
         .addUserOption((o) => o.setName("user").setDescription("User to revoke").setRequired(true)),
     )
-    .addSubcommand((s) =>
-      s.setName("list").setDescription("Show allowlist"),
-    ) as SlashCommandBuilder,
+    .addSubcommand((s) => s.setName("list").setDescription("Show allowlist")),
   execute: async (interaction: ChatInputCommandInteraction) => {
     if (!isOwner(interaction.user.id)) {
-      await interaction.reply({ content: "owner only", flags: MessageFlags.Ephemeral });
+      await interaction.reply(ephemeral("owner only"));
       return;
     }
 
@@ -32,20 +37,14 @@ export const allow: SlashCommand = {
     if (sub === "add") {
       const user = interaction.options.getUser("user", true);
       addAllowed(user.id, interaction.user.id);
-      await interaction.reply({
-        content: `added <@${user.id}> to allowlist`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await interaction.reply(ephemeral(`added ${userMention(user.id)} to allowlist`));
       return;
     }
 
     if (sub === "remove") {
       const user = interaction.options.getUser("user", true);
       removeAllowed(user.id);
-      await interaction.reply({
-        content: `removed <@${user.id}> from allowlist`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await interaction.reply(ephemeral(`removed ${userMention(user.id)} from allowlist`));
       return;
     }
 
@@ -56,12 +55,9 @@ export const allow: SlashCommand = {
         : entries
             .map(
               (e) =>
-                `- <@${e.user_id}> · added <t:${Math.floor(e.added_at / 1000)}:R> by <@${e.added_by}>`,
+                `- ${userMention(e.userId)} · added ${time(e.addedAt, TimestampStyles.RelativeTime)} by ${userMention(e.addedBy)}`,
             )
             .join("\n");
-    await interaction.reply({
-      content: `**Allowlist** (${entries.length})\n${body}`,
-      flags: MessageFlags.Ephemeral,
-    });
+    await interaction.reply(ephemeral(`**Allowlist** (${entries.length})\n${body}`));
   },
 };

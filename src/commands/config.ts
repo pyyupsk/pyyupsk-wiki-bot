@@ -1,5 +1,6 @@
-import { type ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { type ChatInputCommandInteraction, inlineCode, SlashCommandBuilder } from "discord.js";
 import type { SlashCommand } from "../client";
+import { ephemeral } from "../lib/reply";
 import { isOwner } from "../services/allowlist";
 import {
   CONFIG_KEYS,
@@ -40,10 +41,10 @@ export const config: SlashCommand = {
             .setRequired(true)
             .addChoices(...CHOICES),
         ),
-    ) as SlashCommandBuilder,
+    ),
   execute: async (interaction: ChatInputCommandInteraction) => {
     if (!isOwner(interaction.user.id)) {
-      await interaction.reply({ content: "owner only", flags: MessageFlags.Ephemeral });
+      await interaction.reply(ephemeral("owner only"));
       return;
     }
 
@@ -54,12 +55,9 @@ export const config: SlashCommand = {
       const body = CONFIG_KEYS.map((k) => {
         const { value, overridden } = all[k];
         const badge = overridden ? " `[override]`" : " _[default]_";
-        return `- **${k}**: \`${value}\`${badge}`;
+        return `- **${k}**: ${inlineCode(value)}${badge}`;
       }).join("\n");
-      await interaction.reply({
-        content: `**Config**\n${body}`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await interaction.reply(ephemeral(`**Config**\n${body}`));
       return;
     }
 
@@ -68,24 +66,15 @@ export const config: SlashCommand = {
       const value = interaction.options.getString("value", true);
       const res = setConfig(key, value, interaction.user.id);
       if (!res.ok) {
-        await interaction.reply({
-          content: `invalid value for \`${key}\`: ${res.error}`,
-          flags: MessageFlags.Ephemeral,
-        });
+        await interaction.reply(ephemeral(`invalid value for ${inlineCode(key)}: ${res.error}`));
         return;
       }
-      await interaction.reply({
-        content: `set \`${key}\` = \`${res.normalized}\``,
-        flags: MessageFlags.Ephemeral,
-      });
+      await interaction.reply(ephemeral(`set ${inlineCode(key)} = ${inlineCode(res.normalized)}`));
       return;
     }
 
     const key = interaction.options.getString("key", true) as ConfigKey;
     resetConfig(key);
-    await interaction.reply({
-      content: `reset \`${key}\` to default`,
-      flags: MessageFlags.Ephemeral,
-    });
+    await interaction.reply(ephemeral(`reset ${inlineCode(key)} to default`));
   },
 };

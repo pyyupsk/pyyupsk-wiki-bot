@@ -30,6 +30,12 @@ export function removeAllowed(userId: string): void {
   deleteStmt.run(userId);
 }
 
-export function listAllowed(): { user_id: string; added_by: string; added_at: number }[] {
-  return listStmt.all();
+export type AllowEntry = { userId: string; addedBy: string; addedAt: Date };
+
+export function listAllowed(): AllowEntry[] {
+  return listStmt.all().map((r) => ({
+    userId: r.user_id,
+    addedBy: r.added_by,
+    addedAt: new Date(r.added_at),
+  }));
 }
