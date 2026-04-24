@@ -2,6 +2,8 @@
 
 Self-hosted Discord bot that answers questions from a personal Obsidian-style wiki via the Claude CLI. Replies as plain text or Discord embeds depending on the answer shape.
 
+> Built around the wiki-as-second-brain pattern — see [The LLM Wiki Pattern: A Second Brain That Compounds](https://fasu.dev/writings/the-llm-wiki-pattern-a-second-brain-that-compounds) for the motivation.
+
 ## Features
 
 - **`/ask prompt:<text>`** — query the wiki, get text or embed reply
