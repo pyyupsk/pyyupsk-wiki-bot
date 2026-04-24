@@ -21,7 +21,7 @@ export const messageCreate = {
     if (!isAllowed(message.author.id)) return;
 
     if ("sendTyping" in message.channel) await safe(message.channel.sendTyping());
-    if (getConfig("lookup_reaction")) await safe(message.react(":eyes:"));
+    if (getConfig("lookup_reaction")) await safe(message.react("👀"));
 
     const turns = getConfig("reply_chain") ? await walkReplyChain(message, me.id) : [];
     const fullPrompt = formatTranscript(turns, prompt);
