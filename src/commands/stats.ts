@@ -11,8 +11,14 @@ const RANGES = {
 
 type RangeKey = keyof typeof RANGES;
 
+const THB_PER_USD = 34;
+
 function formatUsd(n: number): string {
   return `$${n.toFixed(4)}`;
+}
+
+function formatCost(n: number): string {
+  return `$${n.toFixed(4)} (฿${(n * THB_PER_USD).toFixed(2)})`;
 }
 
 function formatTokens(n: number): string {
@@ -31,7 +37,7 @@ function buildSummaryField(label: string, s: StatsSummary): { name: string; valu
     name: label,
     value: [
       `**${s.queries}** queries · **${s.users}** users`,
-      `cost: **${formatUsd(s.cost_usd)}**`,
+      `cost: **${formatCost(s.cost_usd)}**`,
       `tokens in/out: ${formatTokens(s.input_tokens)} / ${formatTokens(s.output_tokens)}`,
       `cache read/create: ${formatTokens(s.cache_read)} / ${formatTokens(s.cache_create)} (hit ${cacheHitRate}%)`,
       `avg latency: ${(s.avg_duration_ms / 1000).toFixed(2)}s`,
