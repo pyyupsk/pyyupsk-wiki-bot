@@ -1,6 +1,7 @@
 import { Events, type Interaction, MessageFlags } from "discord.js";
 import type { BotClient } from "../client";
 import { logger } from "../lib/logger";
+import { isAllowed, isOwner } from "../services/allowlist";
 
 export const interactionCreate = {
   name: Events.InteractionCreate,
@@ -10,6 +11,12 @@ export const interactionCreate = {
     const client = interaction.client as BotClient;
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
+
+    const allowCheck = interaction.commandName === "allow" ? isOwner : isAllowed;
+    if (!allowCheck(interaction.user.id)) {
+      await interaction.reply({ content: "not authorized", flags: MessageFlags.Ephemeral });
+      return;
+    }
 
     try {
       await command.execute(interaction);

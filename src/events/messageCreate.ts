@@ -1,6 +1,7 @@
 import { Events, type Message } from "discord.js";
 import { formatTranscript, walkReplyChain } from "../lib/chain";
 import { logger } from "../lib/logger";
+import { isAllowed } from "../services/allowlist";
 import { renderReply } from "../services/render";
 import { recordQuery } from "../services/stats";
 import { askWiki } from "../services/wiki";
@@ -15,6 +16,7 @@ export const messageCreate = {
 
     const prompt = message.content.replaceAll(`<@${me.id}>`, "").trim();
     if (!prompt) return;
+    if (!isAllowed(message.author.id)) return;
 
     if ("sendTyping" in message.channel) await message.channel.sendTyping().catch(() => {});
     await message.react(":eyes:").catch(() => {});
