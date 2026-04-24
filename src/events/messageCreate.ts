@@ -1,4 +1,5 @@
 import { Events, type Message } from "discord.js";
+import { formatTranscript, walkReplyChain } from "../lib/chain";
 import { logger } from "../lib/logger";
 import { renderReply } from "../services/render";
 import { recordQuery } from "../services/stats";
@@ -16,7 +17,12 @@ export const messageCreate = {
     if (!prompt) return;
 
     if ("sendTyping" in message.channel) await message.channel.sendTyping().catch(() => {});
-    const [err, result] = await askWiki(prompt);
+
+    const turns = await walkReplyChain(message, me.id);
+    const fullPrompt = formatTranscript(turns, prompt);
+    if (turns.length > 0) logger.info("reply chain", { depth: turns.length });
+
+    const [err, result] = await askWiki(fullPrompt);
     if (err) {
       logger.error("askWiki failed", { err: err.message });
       await message.reply(`error: ${err.message}`);
