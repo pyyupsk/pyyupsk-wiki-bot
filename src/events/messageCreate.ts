@@ -1,4 +1,7 @@
 import { Events, type Message } from "discord.js";
+import { logger } from "../lib/logger";
+import { renderReply } from "../services/render";
+import { askWiki } from "../services/wiki";
 
 export const messageCreate = {
   name: Events.MessageCreate,
@@ -11,7 +14,14 @@ export const messageCreate = {
     const prompt = message.content.replaceAll(`<@${me.id}>`, "").trim();
     if (!prompt) return;
 
-    // TODO: wiki service + render
-    await message.reply(`got: ${prompt}`);
+    if ("sendTyping" in message.channel) await message.channel.sendTyping().catch(() => {});
+    const [err, reply] = await askWiki(prompt);
+    if (err) {
+      logger.error("askWiki failed", { err: err.message });
+      await message.reply(`error: ${err.message}`);
+      return;
+    }
+
+    await message.reply(renderReply(reply));
   },
 };
