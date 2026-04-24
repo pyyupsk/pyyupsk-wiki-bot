@@ -2,6 +2,7 @@ import { z } from "zod";
 import { env } from "../env";
 import { logger } from "../lib/logger";
 import { safe } from "../lib/safe";
+import { getConfig } from "./config";
 
 const embedFieldSchema = z.object({
   name: z.string().max(256),
@@ -141,7 +142,8 @@ async function readHotcache(): Promise<string> {
 }
 
 export async function askWiki(prompt: string): Promise<[Error, null] | [null, AskResult]> {
-  logger.info("wiki query", { prompt, model: env.CLAUDE_MODEL });
+  const model = getConfig("claude_model");
+  logger.info("wiki query", { prompt, model });
 
   const hotcache = await readHotcache();
   const fullSystem = `${SYSTEM}\n\n--- WIKI HOTCACHE ---\n${hotcache}\n--- END HOTCACHE ---\n\nAnswer from the hotcache above. For deeper details, use the Read tool on files under ${env.WIKI_DIR}.`;
@@ -151,7 +153,7 @@ export async function askWiki(prompt: string): Promise<[Error, null] | [null, As
       env.CLAUDE_BIN,
       "-p",
       "--model",
-      env.CLAUDE_MODEL,
+      model,
       "--output-format",
       "json",
       "--permission-mode",
@@ -193,7 +195,7 @@ export async function askWiki(prompt: string): Promise<[Error, null] | [null, As
 
   const queryUsage: QueryUsage | null = usage
     ? {
-        model: env.CLAUDE_MODEL,
+        model,
         input_tokens: usage.input_tokens,
         output_tokens: usage.output_tokens,
         cache_read: usage.cache_read_input_tokens ?? 0,

@@ -1,5 +1,6 @@
 import { type ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { SlashCommand } from "../client";
+import { getConfig } from "../services/config";
 import { getModelBreakdown, getSummary, getTopUsers, type StatsSummary } from "../services/stats";
 
 const RANGES = {
@@ -11,14 +12,13 @@ const RANGES = {
 
 type RangeKey = keyof typeof RANGES;
 
-const THB_PER_USD = 34;
-
 function formatUsd(n: number): string {
   return `$${n.toFixed(4)}`;
 }
 
 function formatCost(n: number): string {
-  return `$${n.toFixed(4)} (฿${(n * THB_PER_USD).toFixed(2)})`;
+  const rate = getConfig("thb_rate");
+  return `$${n.toFixed(4)} (฿${(n * rate).toFixed(2)})`;
 }
 
 function formatTokens(n: number): string {
