@@ -18,7 +18,9 @@ Self-hosted Discord bot that answers questions from a personal Obsidian-style wi
 
 - [Bun](https://bun.sh) (runtime + package manager)
 - [Claude Code CLI](https://github.com/anthropics/claude-code) (`claude` on `PATH`)
-- Claude Max subscription (OAuth) — this bot does **not** need an API key
+- A Claude subscription (Pro or Max plan, via OAuth) — this bot does **not** need an API key
+
+> **Why spawn the CLI instead of calling the API?** The Anthropic API is cheaper per token, but billing is separate from the subscription — you'd pay for both a plan (for Claude Code) _and_ API credits. Spawning `claude -p` reuses the subscription OAuth auth, so queries are covered by the plan you already pay for. If you're willing to pay API credits on top, the `--bare` mode path (not enabled here) would be ~40× cheaper per query.
 - A Discord application + bot token ([Developer Portal](https://discord.com/developers/applications))
 - A local wiki directory (e.g. `~/Obsidian/pyyupsk/wiki`) with a `hotcache.md` file
 
