@@ -29,8 +29,8 @@ Self-hosted Discord bot that answers questions from a personal Obsidian-style wi
 ### 1. Clone + install
 
 ```sh
-git clone <repo> discord-bot
-cd discord-bot
+git clone git@github.com:pyyupsk/pyyupsk-wiki-bot.git
+cd pyyupsk-wiki-bot
 bun install
 ```
 
