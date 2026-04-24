@@ -29,36 +29,87 @@ const textReplySchema = z.object({
 export const wikiReplySchema = z.discriminatedUnion("type", [textReplySchema, embedReplySchema]);
 export type WikiReply = z.infer<typeof wikiReplySchema>;
 
-const SYSTEM = `You are a Discord bot responding to the user.
+const OUTPUT_SCHEMA = {
+  type: "object",
+  required: ["type"],
+  additionalProperties: false,
+  properties: {
+    type: { type: "string", enum: ["text", "embed"] },
+    content: { type: "string", maxLength: 2000 },
+    title: { type: "string", maxLength: 256 },
+    description: { type: "string", maxLength: 4000 },
+    url: { type: "string" },
+    color: { type: "string" },
+    fields: {
+      type: "array",
+      maxItems: 25,
+      items: {
+        type: "object",
+        required: ["name", "value"],
+        additionalProperties: false,
+        properties: {
+          name: { type: "string", maxLength: 256 },
+          value: { type: "string", maxLength: 1024 },
+          inline: { type: "boolean" },
+        },
+      },
+    },
+    footer: { type: "string", maxLength: 2048 },
+  },
+};
 
-WIKI (cost-saving):
-- For substantive questions about projects/tools/notes: check wiki-llms:hotcache FIRST (~500 words of key facts). Only invoke wiki-llms:query if hotcache is insufficient.
-- For casual greetings ("yo", "hi"), meta questions, or general chat: skip the wiki entirely, respond conversationally.
+const SYSTEM = `You are a Discord bot replying to the user.
 
-OUTPUT: You MUST return ONLY valid JSON. No prose. No markdown fences. No explanation.
+WIKI ACCESS (READ-ONLY):
+- For substantive questions: use wiki-llms:query to READ the wiki.
+- You MAY also directly Read hotcache.md / index.md / specific pages from the wiki directory.
+- DO NOT run wiki-llms:ingest, :lint, :hotcache (refresh), or any mutating operation.
+- DO NOT report wiki-maintenance diffs or status updates.
+- For greetings, meta, or chit-chat: skip the wiki entirely.
+
+OUTPUT: Return ONLY a single JSON object in your final message. No prose, no markdown fences, no skill output passthrough. YOU synthesize the answer in your own words.
 
 Schema (pick ONE):
-  { "type": "text", "content": "short conversational answer" }
-
-  { "type": "embed", "title"?, "description"?, "url"?, "color"?: "#RRGGBB" | number,
-    "fields"?: [{"name","value","inline"?}], "footer"? }
+  {"type":"text","content":"..."}
+  {"type":"embed","title"?,"description"?,"url"?,"color"?,"fields"?,"footer"?}
 
 RULES:
-- Pick "embed" when the answer has structure: lists, links, multiple sections, metadata.
-- Pick "text" for short, conversational, single-paragraph answers, greetings, chit-chat.
-- content max 2000 chars, description max 4000, each field value max 1024.
-- If the wiki has no answer, return { "type": "text", "content": "Not found in wiki." }
+- "embed" for structured info (lists, links, multiple sections, metadata).
+- "text" for short conversational replies, greetings, chit-chat.
+- content max 2000, description max 4000, each field value max 1024.
+- If wiki has no answer: {"type":"text","content":"Not found in wiki."}
 
 EXAMPLES:
-User: "yo"
-Response: {"type":"text","content":"hey! what's up?"}
+User: "yo" → {"type":"text","content":"hey!"}
+User: "list my projects" → {"type":"embed","title":"Projects","fields":[{"name":"slappos","value":"..."}]}`;
 
-User: "what is Convex?"
-Response: {"type":"embed","title":"Convex","description":"..."}`;
+const claudeResultSchema = z.object({
+  is_error: z.boolean(),
+  result: z.string().optional(),
+  structured_output: z.unknown().optional(),
+  total_cost_usd: z.number().optional(),
+  duration_ms: z.number().optional(),
+  usage: z
+    .object({
+      input_tokens: z.number(),
+      output_tokens: z.number(),
+      cache_read_input_tokens: z.number().optional(),
+      cache_creation_input_tokens: z.number().optional(),
+    })
+    .optional(),
+});
+
+function tryParseJson<T = unknown>(raw: string): [Error, null] | [null, T] {
+  try {
+    return [null, JSON.parse(raw) as T];
+  } catch (e) {
+    return [e instanceof Error ? e : new Error(String(e)), null];
+  }
+}
 
 function extractJson(raw: string): string {
   const trimmed = raw.trim();
-  const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed);
+  const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed); // NOSONAR - \s and [\s\S] are required regex shorthands, not literal escapes
   if (fence?.[1]) return fence[1];
   const start = trimmed.indexOf("{");
   const end = trimmed.lastIndexOf("}");
@@ -66,19 +117,27 @@ function extractJson(raw: string): string {
   return trimmed;
 }
 
-function tryParseJson(raw: string): [Error, null] | [null, unknown] {
-  try {
-    return [null, JSON.parse(raw)];
-  } catch (e) {
-    return [e instanceof Error ? e : new Error(String(e)), null];
-  }
-}
-
 export async function askWiki(prompt: string): Promise<[Error, null] | [null, WikiReply]> {
   logger.info("wiki query", { prompt, model: env.CLAUDE_MODEL });
 
   const proc = Bun.spawn(
-    [env.CLAUDE_BIN, "-p", "--model", env.CLAUDE_MODEL, "--append-system-prompt", SYSTEM, prompt],
+    [
+      env.CLAUDE_BIN,
+      "-p",
+      "--model",
+      env.CLAUDE_MODEL,
+      "--output-format",
+      "json",
+      "--permission-mode",
+      "bypassPermissions",
+      "--add-dir",
+      env.WIKI_DIR,
+      "--append-system-prompt",
+      SYSTEM,
+      "--json-schema",
+      JSON.stringify(OUTPUT_SCHEMA),
+      prompt,
+    ],
     { stdout: "pipe", stderr: "pipe" },
   );
 
@@ -91,20 +150,37 @@ export async function askWiki(prompt: string): Promise<[Error, null] | [null, Wi
     return [new Error(`claude exited ${code}: ${stderr.slice(0, 500)}`), null];
   }
 
-  const extracted = extractJson(stdout);
-  const [parseErr, json] = tryParseJson(extracted);
-  if (parseErr) {
-    logger.warn("non-JSON response, wrapping as text", { preview: stdout.slice(0, 100) });
-    return [null, { type: "text", content: stdout.trim().slice(0, 2000) }];
-  }
+  const [envErr, envelope] = tryParseJson(stdout);
+  if (envErr) return [new Error(`invalid envelope: ${envErr.message}`), null];
 
-  const result = wikiReplySchema.safeParse(json);
-  if (!result.success) {
-    logger.warn("schema mismatch, wrapping as text", {
-      err: z.prettifyError(result.error),
+  const env_ = claudeResultSchema.safeParse(envelope);
+  if (!env_.success) return [new Error(`envelope schema: ${z.prettifyError(env_.error)}`), null];
+
+  const { is_error, result, structured_output, total_cost_usd, duration_ms, usage } = env_.data;
+
+  if (usage) {
+    logger.info("claude usage", {
+      input: usage.input_tokens,
+      output: usage.output_tokens,
+      cache_read: usage.cache_read_input_tokens ?? 0,
+      cache_create: usage.cache_creation_input_tokens ?? 0,
+      cost_usd: total_cost_usd?.toFixed(6),
+      duration_ms,
     });
-    return [null, { type: "text", content: stdout.trim().slice(0, 2000) }];
   }
 
-  return [null, result.data];
+  if (is_error) return [new Error("claude returned error"), null];
+
+  const candidate = structured_output ?? (result ? tryParseJson(extractJson(result))[1] : null);
+  const parsed = wikiReplySchema.safeParse(candidate);
+  if (!parsed.success) {
+    const fallback = result?.trim() || JSON.stringify(candidate);
+    logger.warn("schema mismatch, wrapping as text", {
+      err: z.prettifyError(parsed.error),
+      preview: fallback.slice(0, 200),
+    });
+    return [null, { type: "text", content: fallback.slice(0, 2000) }];
+  }
+
+  return [null, parsed.data];
 }
