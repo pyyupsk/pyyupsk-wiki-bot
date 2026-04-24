@@ -2,29 +2,29 @@ import { env } from "@/env";
 import { logger } from "@/lib/logger";
 import { safe } from "@/lib/safe";
 
-export const SYSTEM = `You are a Discord bot replying to the user.
+export const SYSTEM = `Discord bot. Reply to user from wiki below.
 
-WIKI ACCESS (READ-ONLY):
-- The wiki hotcache is embedded below. Read it first.
-- For deeper details, use the Read/Glob/Grep tools on files in the wiki directory.
-- DO NOT modify any wiki file.
-- For greetings, meta, or chit-chat: answer directly, skip the wiki.
+WIKI (read-only):
+- Hotcache embedded. Read first.
+- Deeper details: Read/Glob/Grep in wiki dir.
+- Never modify wiki files.
+- Greetings/meta/chit-chat: skip wiki, answer direct.
 
-OUTPUT: Return ONLY a single JSON object in your final message. No prose, no markdown fences, no skill output passthrough. YOU synthesize the answer in your own words.
+OUTPUT: ONE JSON object. No prose, no fences. Synthesize in own words.
 
-Schema (pick ONE):
+Shape (pick 1):
   {"type":"text","content":"..."}
   {"type":"embed","title"?,"description"?,"url"?,"color"?,"fields"?,"footer"?}
 
 RULES:
-- "embed" for structured info (lists, links, multiple sections, metadata).
-- "text" for short conversational replies, greetings, chit-chat.
-- content max 2000, description max 4000, each field value max 1024.
-- If wiki has no answer: {"type":"text","content":"Not found in wiki."}
+- "embed": lists, links, sections, metadata.
+- "text": short replies, greetings.
+- Limits: content 2000, desc 4000, field value 1024.
+- No answer: {"type":"text","content":"Not found in wiki."}
 
-EXAMPLES:
-User: "yo" → {"type":"text","content":"hey!"}
-User: "list my projects" → {"type":"embed","title":"Projects","fields":[{"name":"slappos","value":"..."}]}`;
+EX:
+"yo" → {"type":"text","content":"hey!"}
+"list projects" → {"type":"embed","title":"Projects","fields":[{"name":"nit","value":"..."}]}`;
 
 let hotcacheCache: { mtime: number; text: string } | null = null;
 
@@ -37,7 +37,7 @@ export async function readHotcache(): Promise<string> {
     return "";
   }
   const mtime = stat.mtimeMs;
-  if (hotcacheCache && hotcacheCache.mtime === mtime) return hotcacheCache.text;
+  if (hotcacheCache?.mtime === mtime) return hotcacheCache.text;
 
   const [readErr, text] = await safe(file.text());
   if (readErr) return "";
@@ -46,5 +46,5 @@ export async function readHotcache(): Promise<string> {
 }
 
 export function buildSystemPrompt(hotcache: string): string {
-  return `${SYSTEM}\n\n--- WIKI HOTCACHE ---\n${hotcache}\n--- END HOTCACHE ---\n\nAnswer from the hotcache above. For deeper details, use the Read tool on files under ${env.WIKI_DIR}.`;
+  return `${SYSTEM}\n\n--- HOTCACHE ---\n${hotcache}\n--- END ---\n\nAnswer from hotcache. Deeper: Read tool on ${env.WIKI_DIR}.`;
 }
