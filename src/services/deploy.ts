@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { REST, Routes } from "discord.js";
-import { commands } from "../commands";
-import { env } from "../env";
-import { logger } from "../lib/logger";
-import { safe } from "../lib/safe";
+import { commands } from "@/commands";
+import { env } from "@/env";
+import { logger } from "@/lib/logger";
+import { safe } from "@/lib/safe";
 
 const CACHE_PATH = ".local/commands.hash";
 

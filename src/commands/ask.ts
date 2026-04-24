@@ -1,9 +1,9 @@
 import { type ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import type { SlashCommand } from "../client";
-import { logger } from "../lib/logger";
-import { renderReply } from "../services/render";
-import { recordQuery } from "../services/stats";
-import { askWiki } from "../services/wiki";
+import type { SlashCommand } from "@/client";
+import { logger } from "@/lib/logger";
+import { renderReply } from "@/services/render";
+import { recordQuery } from "@/services/stats";
+import { askWiki } from "@/services/wiki";
 
 export const ask: SlashCommand = {
   data: new SlashCommandBuilder()

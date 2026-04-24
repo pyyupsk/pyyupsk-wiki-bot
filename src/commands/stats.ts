@@ -5,9 +5,9 @@ import {
   SlashCommandBuilder,
   userMention,
 } from "discord.js";
-import type { SlashCommand } from "../client";
-import { getConfig } from "../services/config";
-import { getModelBreakdown, getSummary, getTopUsers, type StatsSummary } from "../services/stats";
+import type { SlashCommand } from "@/client";
+import { getConfig } from "@/services/config";
+import { getModelBreakdown, getSummary, getTopUsers, type StatsSummary } from "@/services/stats";
 
 const DISCORD_BLURPLE = 0x5865f2;
 const TOP_USERS_LIMIT = 5;

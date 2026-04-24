@@ -1,7 +1,7 @@
 import { Events, type Interaction, MessageFlags } from "discord.js";
-import type { BotClient } from "../client";
-import { logger } from "../lib/logger";
-import { isAllowed, isOwner } from "../services/allowlist";
+import type { BotClient } from "@/client";
+import { logger } from "@/lib/logger";
+import { isAllowed, isOwner } from "@/services/allowlist";
 
 export const interactionCreate = {
   name: Events.InteractionCreate,

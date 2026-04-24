@@ -5,11 +5,11 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
-import type { SlashCommand } from "../client";
-import { logger } from "../lib/logger";
-import { ephemeral } from "../lib/reply";
-import { safe } from "../lib/safe";
-import { isOwner } from "../services/allowlist";
+import type { SlashCommand } from "@/client";
+import { logger } from "@/lib/logger";
+import { ephemeral } from "@/lib/reply";
+import { safe } from "@/lib/safe";
+import { isOwner } from "@/services/allowlist";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 

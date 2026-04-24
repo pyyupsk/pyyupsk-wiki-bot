@@ -1,12 +1,12 @@
 import { Events, type Message } from "discord.js";
-import { formatTranscript, stripMention, walkReplyChain } from "../lib/chain";
-import { logger } from "../lib/logger";
-import { safe } from "../lib/safe";
-import { isAllowed } from "../services/allowlist";
-import { getConfig } from "../services/config";
-import { renderReply } from "../services/render";
-import { recordQuery } from "../services/stats";
-import { askWiki } from "../services/wiki";
+import { formatTranscript, stripMention, walkReplyChain } from "@/lib/chain";
+import { logger } from "@/lib/logger";
+import { safe } from "@/lib/safe";
+import { isAllowed } from "@/services/allowlist";
+import { getConfig } from "@/services/config";
+import { renderReply } from "@/services/render";
+import { recordQuery } from "@/services/stats";
+import { askWiki } from "@/services/wiki";
 
 export const messageCreate = {
   name: Events.MessageCreate,

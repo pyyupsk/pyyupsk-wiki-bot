@@ -1,4 +1,4 @@
-import { env } from "../env";
+import { env } from "@/env";
 import { db } from "./db";
 
 const selectStmt = db.prepare<{ user_id: string }, [string]>(

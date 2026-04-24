@@ -1,4 +1,4 @@
-import { env } from "../env";
+import { env } from "@/env";
 import { db } from "./db";
 
 const MODEL_CHOICES = ["haiku", "sonnet", "opus"] as const;

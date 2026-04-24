@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { env } from "../../env";
-import { logger } from "../../lib/logger";
-import { safe } from "../../lib/safe";
-import { getConfig } from "../config";
+import { env } from "@/env";
+import { logger } from "@/lib/logger";
+import { safe } from "@/lib/safe";
+import { getConfig } from "@/services/config";
 import { buildSystemPrompt, readHotcache } from "./prompt";
 import { claudeResultSchema, OUTPUT_JSON_SCHEMA, type WikiReply, wikiReplySchema } from "./schemas";
 

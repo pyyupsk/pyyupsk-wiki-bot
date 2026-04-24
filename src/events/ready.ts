@@ -1,5 +1,5 @@
 import { Events } from "discord.js";
-import { logger } from "../lib/logger";
+import { logger } from "@/lib/logger";
 
 export const ready = {
   name: Events.ClientReady,

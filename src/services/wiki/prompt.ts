@@ -1,6 +1,6 @@
-import { env } from "../../env";
-import { logger } from "../../lib/logger";
-import { safe } from "../../lib/safe";
+import { env } from "@/env";
+import { logger } from "@/lib/logger";
+import { safe } from "@/lib/safe";
 
 export const SYSTEM = `You are a Discord bot replying to the user.
 

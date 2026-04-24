@@ -1,4 +1,4 @@
-import type { BotClient, SlashCommand } from "../client";
+import type { BotClient, SlashCommand } from "@/client";
 import { allow } from "./allow";
 import { ask } from "./ask";
 import { cleanup } from "./cleanup";

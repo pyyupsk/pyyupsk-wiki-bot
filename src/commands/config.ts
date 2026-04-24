@@ -1,14 +1,14 @@
 import { type ChatInputCommandInteraction, inlineCode, SlashCommandBuilder } from "discord.js";
-import type { SlashCommand } from "../client";
-import { ephemeral } from "../lib/reply";
-import { isOwner } from "../services/allowlist";
+import type { SlashCommand } from "@/client";
+import { ephemeral } from "@/lib/reply";
+import { isOwner } from "@/services/allowlist";
 import {
   CONFIG_KEYS,
   type ConfigKey,
   getAllConfig,
   resetConfig,
   setConfig,
-} from "../services/config";
+} from "@/services/config";
 
 const CHOICES = CONFIG_KEYS.map((k) => ({ name: k, value: k }));
 

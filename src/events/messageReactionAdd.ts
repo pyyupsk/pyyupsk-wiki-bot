@@ -5,9 +5,9 @@ import {
   type PartialUser,
   type User,
 } from "discord.js";
-import { logger } from "../lib/logger";
-import { safe } from "../lib/safe";
-import { isOwner } from "../services/allowlist";
+import { logger } from "@/lib/logger";
+import { safe } from "@/lib/safe";
+import { isOwner } from "@/services/allowlist";
 
 const TRASH = "🗑️";
 

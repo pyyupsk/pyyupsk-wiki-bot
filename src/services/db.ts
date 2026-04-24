@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, unlinkSync } from "node:fs";
 import { dirname } from "node:path";
-import { logger } from "../lib/logger";
+import { logger } from "@/lib/logger";
 
 const DB_PATH = ".local/bot.db";
 const LEGACY_DBS = [".local/stats.db", ".local/allowlist.db", ".local/config.db"];

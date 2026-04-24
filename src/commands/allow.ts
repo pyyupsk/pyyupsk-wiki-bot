@@ -5,9 +5,9 @@ import {
   time,
   userMention,
 } from "discord.js";
-import type { SlashCommand } from "../client";
-import { ephemeral } from "../lib/reply";
-import { addAllowed, isOwner, listAllowed, removeAllowed } from "../services/allowlist";
+import type { SlashCommand } from "@/client";
+import { ephemeral } from "@/lib/reply";
+import { addAllowed, isOwner, listAllowed, removeAllowed } from "@/services/allowlist";
 
 export const allow: SlashCommand = {
   data: new SlashCommandBuilder()
