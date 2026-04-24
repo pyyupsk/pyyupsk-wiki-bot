@@ -6,7 +6,10 @@ const schema = z.object({
   DISCORD_GUILD_ID: z.string().optional(),
   CLAUDE_BIN: z.string().default("claude"),
   CLAUDE_MODEL: z.string().default("haiku"),
-  WIKI_DIR: z.string().default(`${process.env.HOME}/Obsidian/pyyupsk/wiki`),
+  WIKI_DIR: z
+    .string()
+    .default(`${process.env.HOME}/Obsidian/pyyupsk/wiki`)
+    .transform((p) => (p.startsWith("~/") ? `${process.env.HOME}${p.slice(1)}` : p)),
 });
 
 const parsed = schema.safeParse(process.env);

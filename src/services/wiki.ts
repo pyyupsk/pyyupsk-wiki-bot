@@ -76,11 +76,10 @@ const OUTPUT_SCHEMA = {
 const SYSTEM = `You are a Discord bot replying to the user.
 
 WIKI ACCESS (READ-ONLY):
-- For substantive questions: use wiki-llms:query to READ the wiki.
-- You MAY also directly Read hotcache.md / index.md / specific pages from the wiki directory.
-- DO NOT run wiki-llms:ingest, :lint, :hotcache (refresh), or any mutating operation.
-- DO NOT report wiki-maintenance diffs or status updates.
-- For greetings, meta, or chit-chat: skip the wiki entirely.
+- The wiki hotcache is embedded below. Read it first.
+- For deeper details, use the Read/Glob/Grep tools on files in the wiki directory.
+- DO NOT modify any wiki file.
+- For greetings, meta, or chit-chat: answer directly, skip the wiki.
 
 OUTPUT: Return ONLY a single JSON object in your final message. No prose, no markdown fences, no skill output passthrough. YOU synthesize the answer in your own words.
 
@@ -132,8 +131,20 @@ function extractJson(raw: string): string {
   return trimmed;
 }
 
+async function readHotcache(): Promise<string> {
+  const [err, text] = await safe(Bun.file(`${env.WIKI_DIR}/hotcache.md`).text());
+  if (err) {
+    logger.warn("hotcache.md not found", { path: `${env.WIKI_DIR}/hotcache.md` });
+    return "";
+  }
+  return text;
+}
+
 export async function askWiki(prompt: string): Promise<[Error, null] | [null, AskResult]> {
   logger.info("wiki query", { prompt, model: env.CLAUDE_MODEL });
+
+  const hotcache = await readHotcache();
+  const fullSystem = `${SYSTEM}\n\n--- WIKI HOTCACHE ---\n${hotcache}\n--- END HOTCACHE ---\n\nAnswer from the hotcache above. For deeper details, use the Read tool on files under ${env.WIKI_DIR}.`;
 
   const proc = Bun.spawn(
     [
@@ -145,10 +156,17 @@ export async function askWiki(prompt: string): Promise<[Error, null] | [null, As
       "json",
       "--permission-mode",
       "bypassPermissions",
+      "--setting-sources",
+      "",
+      "--strict-mcp-config",
+      "--mcp-config",
+      '{"mcpServers":{}}',
+      "--tools",
+      "Read,Glob,Grep",
       "--add-dir",
       env.WIKI_DIR,
-      "--append-system-prompt",
-      SYSTEM,
+      "--system-prompt",
+      fullSystem,
       "--json-schema",
       JSON.stringify(OUTPUT_SCHEMA),
       prompt,
